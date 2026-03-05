@@ -1,10 +1,8 @@
 import express from "express";
 import cors from "cors";
+import globalErrorHandler from "./middlewares/error.middleware.js";
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: "ok", service: "TaskFlow API" });
-});
-
+app.use(globalErrorHandler);
 export default app;
