@@ -21,5 +21,14 @@ const createTask = asyncHandler(async (req, res) => {
   }
   return res.status(200).json(new apiResponse(200, { task }, "task created"));
 });
-
-export { createTask };
+const getTasks = asyncHandler(async (req, res) => {
+  console.log("task is called");
+  const tasks = await Task.find();
+  //   console.log(tasks);
+  if (!tasks) {
+    throw new ApiError(404, "No Task");
+  }
+  console.log(tasks);
+  return res.status(200).json(new apiResponse(200, tasks, "all tasks fetched"));
+});
+export { createTask, getTasks };
