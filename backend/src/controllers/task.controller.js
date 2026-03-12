@@ -22,13 +22,29 @@ const createTask = asyncHandler(async (req, res) => {
   return res.status(200).json(new apiResponse(200, { task }, "task created"));
 });
 const getTasks = asyncHandler(async (req, res) => {
-  console.log("task is called");
-  const tasks = await Task.find();
-  //   console.log(tasks);
+  const tasks = await Task.find({ createdBy: req.user._id.toString() });
   if (!tasks) {
     throw new ApiError(404, "No Task");
   }
-  console.log(tasks);
   return res.status(200).json(new apiResponse(200, tasks, "all tasks fetched"));
 });
-export { createTask, getTasks };
+const updateTask = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const task = await Task.findById(id);
+  if (!task) {
+    throw new ApiError(404, "Task not found");
+  }
+  //check ownership
+  if (task.createdBy.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "You are not allowed to update the task");
+  }
+  //update fields
+  const updateTask = await Task.findByIdAndUpdate(id, req.body, {
+    new: true,
+    runValidators: true
+  });
+  res
+    .status(200)
+    .json(new apiResponse(200, updateTask, "Task Updated successfully"));
+});
+export { createTask, getTasks, updateTask };
