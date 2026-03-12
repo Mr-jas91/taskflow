@@ -47,4 +47,16 @@ const updateTask = asyncHandler(async (req, res) => {
     .status(200)
     .json(new apiResponse(200, updateTask, "Task Updated successfully"));
 });
-export { createTask, getTasks, updateTask };
+const deleteTask = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const task = await Task.findById(id);
+  if (!task) {
+    throw new ApiError(404, "Task not Found");
+  }
+  if (task.createdBy.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Not allowed to delete task");
+  }
+  await task.deleteOne();
+  res.status(200).json(new apiResponse(200, {}, "Delete Successfully"));
+});
+export { createTask, getTasks, updateTask, deleteTask };
