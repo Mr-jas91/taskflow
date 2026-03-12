@@ -33,7 +33,8 @@ const getTasks = asyncHandler(async (req, res) => {
   if (req.query.priority) {
     filter.priority = req.query.priority;
   }
-  const tasks = await Task.find(filter).skip(skip).limit(limit);
+  const sort = req.query.sort || "-createdAt";
+  const tasks = await Task.find(filter).sort(sort).skip(skip).limit(limit);
   if (!tasks) {
     throw new ApiError(404, "No Task");
   }
