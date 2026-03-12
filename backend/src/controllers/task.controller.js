@@ -22,11 +22,27 @@ const createTask = asyncHandler(async (req, res) => {
   return res.status(200).json(new apiResponse(200, { task }, "task created"));
 });
 const getTasks = asyncHandler(async (req, res) => {
-  const tasks = await Task.find({ createdBy: req.user._id.toString() });
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+  const tasks = await Task.find({ createdBy: req.user._id })
+    .skip(skip)
+    .limit(limit);
   if (!tasks) {
     throw new ApiError(404, "No Task");
   }
-  return res.status(200).json(new apiResponse(200, tasks, "all tasks fetched"));
+  const totalTasks = await Task.countDocuments({
+    createdBy: req.user._id.toString()
+  });
+  return res
+    .status(200)
+    .json(
+      new apiResponse(
+        200,
+        { page, totalPagess: Math.ceil(totalTasks / limit), tasks },
+        "all tasks fetched"
+      )
+    );
 });
 const updateTask = asyncHandler(async (req, res) => {
   const { id } = req.params;
