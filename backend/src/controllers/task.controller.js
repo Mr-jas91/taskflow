@@ -22,25 +22,43 @@ const createTask = asyncHandler(async (req, res) => {
   return res.status(200).json(new apiResponse(200, { task }, "task created"));
 });
 const getTasks = asyncHandler(async (req, res) => {
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 10;
+  const {
+    search,
+    status,
+    priority,
+    page = 1,
+    limit = 10,
+    sort = "createdAt"
+  } = req.query;
+  let query = { createdBy: req.user._id };
+  if (status) {
+    query.status = status;
+  }
+  if (priority) {
+    query.priority = priority;
+  }
+  if (search) {
+    query.$or = [
+      {
+        title: {
+          $regex: search,
+          $options: "i"
+        }
+      },
+      {
+        description: {
+          $regex: search,
+          $options: "i"
+        }
+      }
+    ];
+  }
   const skip = (page - 1) * limit;
-  //filter
-  const filter = { createdBy: req.user._id };
-  if (req.query.status) {
-    filter.status = req.query.status;
-  }
-  if (req.query.priority) {
-    filter.priority = req.query.priority;
-  }
-  const sort = req.query.sort || "-createdAt";
-  const tasks = await Task.find(filter).sort(sort).skip(skip).limit(limit);
+  const tasks = await Task.find(query).sort(sort).skip(skip).limit(limit);
   if (!tasks) {
     throw new ApiError(404, "No Task");
   }
-  const totalTasks = await Task.countDocuments({
-    createdBy: req.user._id.toString()
-  });
+  const totalTasks = await Task.countDocuments(query);
   return res
     .status(200)
     .json(
@@ -82,4 +100,5 @@ const deleteTask = asyncHandler(async (req, res) => {
   await task.deleteOne();
   res.status(200).json(new apiResponse(200, {}, "Delete Successfully"));
 });
+
 export { createTask, getTasks, updateTask, deleteTask };
